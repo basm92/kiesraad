@@ -36,6 +36,12 @@ def parse_candidate_eml(file_name):
             registered_name = affiliation.find('.//eml:RegisteredName', namespace)
             # Extract 'RegisteredName' if found, otherwise set it as "N/A"
             registered_name_text = registered_name.text if registered_name is not None else "NA"
+            # Find party ID
+            affiliation_id = affiliation.find('.//eml:AffiliationIdentifier', namespace)
+            if affiliation_id is not None:
+                party_id = affiliation_id.get('Id')
+            else:
+                party_id = "NA"
             
             candidate_id = candidate.find('.//eml:CandidateIdentifier', namespace).attrib['Id']
             name_elements = candidate.find('.//xnl:PersonName', namespace)
@@ -73,7 +79,8 @@ def parse_candidate_eml(file_name):
                 locality_name = "NA"
             
             out.append({'candidate_id': candidate_id, 
-                        'party' : registered_name_text,
+                        'party_name' : registered_name_text,
+                        'party_id': party_id,
                        'firstname': first_name, 
                        'initials': voorletters,
                        'prefix': prefix,
@@ -85,4 +92,5 @@ def parse_candidate_eml(file_name):
         
         
 #test = parse_candidate_eml('../data/tk2021/Kandidatenlijsten_TK2021_Amsterdam.eml.xml')
+#test
 #pd.DataFrame(test)
