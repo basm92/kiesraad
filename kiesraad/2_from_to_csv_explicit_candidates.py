@@ -20,12 +20,14 @@ import parse_eml
 from help_parse_candidate_eml import parse_candidate_eml
 
 # List all files in the directory
-directory = '../data/tk2021'
-files = os.listdir(directory)
-kandidaten_lijsten = [i for i in files if 'Kandidatenlijsten' in i]
 
-def find_relevant_candidate_list_for_csv_file(csv_file):
+
+def find_relevant_candidate_list_for_csv_file(csv_file, candidate_list_directory):
+    # First identify the candidate lists
+    files = os.listdir(candidate_list_directory)
+    kandidaten_lijsten = [i for i in files if 'Kandidatenlijsten' in i]
     
+    # Identify the .csv file with the votes per candidates per bureau
     data = pd.read_csv(csv_file)
     kieskring_name = pd.unique(data['contest_name'])[0]
     
@@ -51,30 +53,16 @@ def find_relevant_candidate_list_for_csv_file(csv_file):
         right_on=['party_id', 'candidate_id']
         )
     
-    # Group by - aggregate to the municipal level
+    data_with_candidate_info.drop(columns=['party_name_x'], inplace=True)
     
+    #columns_to_group_by = 
+    excluded_columns = ['postcode', 'station_name', 'station_id', 'election_domain_name', 'election_domain_id', 'votes'] # Select the columns you want to exclude by index
+    included_columns = [col for col in data_with_candidate_info.columns if col not in excluded_columns]
+
+    result = data_with_candidate_info.groupby(included_columns)['votes'].sum().reset_index()
+    output_name = csv_file[:-4] + '_' + 'corrected.csv'
+    result.to_csv(output_name)
 
 
-data = pd.read_csv('../data/tk2021/csv/Telling_TK2021_gemeente_Aa_en_Hunze.eml_per_candidate.csv')
-kieskring_name = pd.unique(data['contest_name'])[0]
 
-candidate_list_file = (next((filename for filename 
-                             in kandidaten_lijsten 
-                             if kieskring_name in filename), None)
-                       )
 
-url = '../data/tk2021/' + candidate_list_file
-candidate_df = pd.DataFrame(parse_candidate_eml(url))
-candidate_df['party_id'] = candidate_df['party_id'].astype('int64')
-candidate_df['candidate_id'] = candidate_df['candidate_id'].astype('int64')
-data['party_id'] = data['party_id'].astype('int64')
-data['candidate_identifier'] = data['candidate_identifier'].astype('int64')
-
-data_with_candidate_info = pd.merge(
-    data, candidate_df,
-    how='left',
-    left_on=['party_id', 'candidate_identifier'], 
-    right_on=['party_id', 'candidate_id']
-    )
-
-data_with_candidate_info
