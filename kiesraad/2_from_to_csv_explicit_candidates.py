@@ -16,6 +16,7 @@ Step 3: Aggregates the per-candidate csv file to the municipal level
 import os
 from pathlib import Path
 import pandas as pd
+import re
 import parse_eml
 from help_parse_candidate_eml import parse_candidate_eml
 
@@ -30,10 +31,12 @@ def find_relevant_candidate_list_for_csv_file(csv_file, candidate_list_directory
     # Identify the .csv file with the votes per candidates per bureau
     data = pd.read_csv(csv_file)
     kieskring_name = pd.unique(data['contest_name'])[0]
+    modified_kieskring_name = re.compile(r"^'s-").sub('', kieskring_name)
+    modified_kieskring_name = re.sub(r'^Den\s', '', modified_kieskring_name) 
     
     candidate_list_file = (next((filename for filename 
                                  in kandidaten_lijsten 
-                                 if kieskring_name in filename), None)
+                                 if modified_kieskring_name in filename), None)
                            )
     
     url = '../data/tk2021/' + candidate_list_file
@@ -64,5 +67,8 @@ def find_relevant_candidate_list_for_csv_file(csv_file, candidate_list_directory
     result.to_csv(output_name)
 
 
-
+for i in os.listdir('../data/tk2021/csv/'):
+    if 'per_candidate.csv' in i:
+        file = '../data/tk2021/csv/' + i
+        find_relevant_candidate_list_for_csv_file(file, '../data/tk2021')
 
