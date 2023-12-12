@@ -30,25 +30,26 @@ def from_candidate_to_linkedin_link(data, variable_name : str):
 
     for index, row in data.iterrows():
         name = row[variable_name]
-        print(row)
         
         # Find the search bar, input the search query, and press Enter
         search_box = driver.find_element(By.NAME, 'q')
-        search_box.send_keys(name + ' linkedin')
+        search_box.send_keys('site:nl.linkedin.com ' + name)
         search_box.send_keys(Keys.RETURN)
         time.sleep(2)
         
         # Find all the search results
-        search_results = driver.find_elements(By.CSS_SELECTOR,'div.r > a')
-        
+        search_results = driver.find_elements(By.CSS_SELECTOR,'div.yuRUbf')
+
         # Extract the first and second LinkedIn URLs from the search results
         linkedin_urls = []
         for result in search_results:
-            url = result.get_attribute('href')
+            element = result.find_element(By.CSS_SELECTOR, 'a')
+            url = element.get_attribute('href')
             if 'linkedin.com' in url:
                 linkedin_urls.append(url)
                 if len(linkedin_urls) == 2:
                     break
+                
         # Update the 'li_urls' column with the LinkedIn URLs
         data.at[index, 'li_urls'] = linkedin_urls
         
@@ -58,5 +59,5 @@ def from_candidate_to_linkedin_link(data, variable_name : str):
     driver.quit()
 
 data = pd.read_csv('../data/tk2021/csv/Telling_TK2021_gemeente_Zeewolde.eml_per_candidate_corrected.csv')
-data['fullname'] = data['firstname'].fillna('') + data['prefix'].fillna('') + data['lastname'].fillna('')
+data['fullname'] = data['firstname'].fillna('') + ' ' + data['prefix'].fillna('') + data['lastname'].fillna('')
 from_candidate_to_linkedin_link(data, 'fullname')
